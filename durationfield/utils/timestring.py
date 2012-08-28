@@ -27,30 +27,36 @@ def str_to_timedelta(td_str):
     if not td_str:
         return None
 
-    time_format = r"(?:(?P<weeks>\d+)\W*(?:weeks?|w),?)?\W*(?:(?P<days>\d+)\W*(?:days?|d),?)?\W*(?:(?P<hours>\d+):(?P<minutes>\d+)(?::(?P<seconds>\d+)(?:\.(?P<microseconds>\d+))?)?)?"
-    if ALLOW_MONTHS:
-        time_format = r"(?:(?P<months>\d+)\W*(?:months?|m),?)?\W*" + time_format
-    if ALLOW_YEARS:
-        time_format = r"(?:(?P<years>\d+)\W*(?:years?|y),?)?\W*" + time_format
-    time_matcher = re.compile(time_format)
-    time_matches = time_matcher.match(td_str)
-    time_groups = time_matches.groupdict()
+    # set default values.
+    days = 0
+    hours = 0
+    minutes = 0
+    seconds = 0
+    microseconds = 0
 
-    for key in time_groups.keys():
-        if time_groups[key]:
-            time_groups[key] = int(time_groups[key])
-        else:
-            time_groups[key] = 0
+    split_up = td_str.split(':')
+    nbr_fields = len(split_up)
 
-    if "years" in time_groups.keys():
-        time_groups["days"] = time_groups["days"] + (time_groups["years"] * YEARS_TO_DAYS)
-    if "months" in time_groups.keys():
-        time_groups["days"] = time_groups["days"] + (time_groups["months"] * MONTHS_TO_DAYS)
-    time_groups["days"] = time_groups["days"] + (time_groups["weeks"] * 7)
+    if nbr_fields == 0: # should never happen
+        pass
+    if nbr_fields == 1:
+        seconds = int(split_up[0])
+    elif nbr_fields == 2:
+        minutes = int(split_up[0])
+        seconds = int(split_up[1])
+    elif nbr_fields == 3:
+        hours = int(split_up[0])
+        minutes = int(split_up[1])
+        seconds = int(split_up[2])
+    else: # in case there's more than 3 fields ...
+        hours = int(split_up[-3])
+        minutes = int(split_up[-2])
+        seconds = int(split_up[-1])
+
 
     return timedelta(
-        days=time_groups["days"],
-        hours=time_groups["hours"],
-        minutes=time_groups["minutes"],
-        seconds=time_groups["seconds"],
-        microseconds=time_groups["microseconds"])
+        days=days,
+        hours=hours,
+        minutes=minutes,
+        seconds=seconds,
+        microseconds=microseconds)
